@@ -10,21 +10,18 @@ enable = []
 format = []
 
 lnum = True
+header = True
 
 first_row = 1
 first_col = 0
 
 def main(stdscr, f):
-    global lines
-    global col
-    global width
-    global enable
 
     with open(f, 'rb') as f:
-        lines = list(csv.reader(f))
+        lines[:] = list(csv.reader(f))
 
-    col = lines[0]
-    enable = [True] * len(col)
+    col[:] = lines[0]
+    enable[:] = [True] * len(col)
     set_widths()
     set_formats()
 
@@ -39,11 +36,10 @@ def main(stdscr, f):
 
 
 def set_widths() :
-    global width
     k = len(col)
-    width = [0] * k
+    width[:] = [0] * k
     for line in lines:
-        width = [ max(width[i], len(line[i])) for i in range(k) ]
+        width[:] = [ max(width[i], len(line[i])) for i in range(k) ]
     
 
 def set_formats() :
@@ -57,6 +53,7 @@ def handler(stdscr) :
     j = stdscr.getkey()
     if j == 'q' : sys.exit()
     if j == '`' : lnum = not lnum
+    if j == 'h' : header = not header
     if j == 'KEY_UP' : first_row -= 3
     if j == 'KEY_DOWN' : first_row += 3
     if j == 'KEY_LEFT' : first_col = max(first_col - 1, 0)
@@ -79,27 +76,28 @@ def draw(stdscr) :
     stdscr.vline(i, j, curses.ACS_VLINE, maxy)
     j+=1;
 
-    for k in range(first_col, n):
-        if not enable[k]: continue
-        if j + width[k] > maxx: break
-        stdscr.addstr(i, j, col[k])
-        j += width[k]
-        stdscr.vline(i, j, curses.ACS_VLINE, maxy)
-        j += 1
-    i +=  1
+    if header :
+        for k in range(first_col, n):
+            if not enable[k]: continue
+            if j + width[k] > maxx: break
+            stdscr.addstr(i, j, col[k])
+            j += width[k]
+            stdscr.vline(i, j, curses.ACS_VLINE, maxy)
+            j += 1
+        i +=  1
 
-    stdscr.hline(i, start, curses.ACS_HLINE, j-start)
+        stdscr.hline(i, start, curses.ACS_HLINE, j-start)
 
-    j = start
-    stdscr.addch(i, j, curses.ACS_LTEE)
-    for k in range(first_col, n):
-        if not enable[k]: continue
-        if j + width[k] > maxx: break
-        j += width[k] + 1
-        stdscr.addch(i, j, curses.ACS_PLUS)
-    stdscr.addch(i, j, curses.ACS_RTEE)
+        j = start
+        stdscr.addch(i, j, curses.ACS_LTEE)
+        for k in range(first_col, n):
+            if not enable[k]: continue
+            if j + width[k] > maxx: break
+            j += width[k] + 1
+            stdscr.addch(i, j, curses.ACS_PLUS)
+        stdscr.addch(i, j, curses.ACS_RTEE)
+        i += 1
 
-    i += 1
     # lines
 
     curr = first_row
