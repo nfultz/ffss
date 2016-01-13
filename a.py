@@ -39,7 +39,7 @@ def main(stdscr, f):
 
     col[:] = lines[0]
     enable[:] = [True] * len(col)
-    set_widths()
+    width[:] = map(lambda col: reduce(max, [len(s) for s in col]), zip(*lines))
 
     irxp = re.compile('^-?[0-9]+$')
     frxp = re.compile('^-?[0-9]*[.]?[0-9]*$')
@@ -63,12 +63,13 @@ def main(stdscr, f):
         handler(stdscr)
 
 
-def set_widths() :
-    k = len(col)
-    width[:] = [0] * k
-    for line in lines:
+#def set_widths() :
+#    map(lambda col: reduce(max, [len(s) for s in col]), zip(*lines))
+#    k = len(col)
+#    width[:] = [0] * k
+#    for line in lines:
 #        width[:] = [ max(width[i], len(line[i])) for i in range(k) ]
-        width[:] = [ max(w, len(f)) for w, f in zip(width, line) ]
+#        width[:] = [ max(w, len(f)) for w, f in zip(width, line) ]
     
 def scroll(delta) :
     global first_row
@@ -88,6 +89,7 @@ def handler(stdscr) :
     if j == '~' : header = not header
     if j == 'k' : scroll(-1)
     if j == 'j' : scroll(1)
+    if j == 'X' : enable[:] = [True] * len(col)
     if j == 'KEY_UP' : scroll(-15)
     if j == 'KEY_DOWN' : scroll(15)
     if j == 'KEY_LEFT' : first_col = max(first_col - 1, 0)
