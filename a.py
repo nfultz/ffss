@@ -1,7 +1,7 @@
 import curses
 import sys
 import csv
-
+import re
 from decimal import Decimal
 
 lines = []
@@ -41,6 +41,22 @@ def main(stdscr, f):
     enable[:] = [True] * len(col)
     set_widths()
 
+    irxp = re.compile('^-?[0-9]+$')
+    frxp = re.compile('^-?[0-9]*[.]?[0-9]*$')
+    for i in range(len(col)):
+        if all(irxp.match(x[i]) for x in lines[1:]):
+            for line in lines[1:]: line[i] = ('%%%dd' % width[i]) % int(line[i])
+        if all(frxp.match(x[i]) for x in lines[1:]):
+            for line in lines[1:]: line[i] = Decimal(line[i]).as_tuple()
+            digits = reduce(digitReducer, [ line[i] for line in lines[1:] ], (0,0))               
+            digits[0] = max(digits[0], len(lines[0][i]) - digits[1] - 1)
+            width[i] = digits[0] + digits[1] + 1
+            for line in lines[1:]: line[i] = tuptoString(line[i], digits[0], digits[1])
+
+
+
+
+
     curses.use_default_colors()
 
     # Clear screen
@@ -55,7 +71,8 @@ def set_widths() :
     k = len(col)
     width[:] = [0] * k
     for line in lines:
-        width[:] = [ max(width[i], len(line[i])) for i in range(k) ]
+#        width[:] = [ max(width[i], len(line[i])) for i in range(k) ]
+        width[:] = [ max(w, len(f)) for w, f in zip(width, line) ]
     
 
 
@@ -85,26 +102,27 @@ def handler(stdscr) :
 
     i = i - 1
 
-    if j == 's' :
-        for line in lines[1:]: line[i] = line[i].strip()
+#    if j == 's' :
+#        for line in lines[1:]: line[i] = line[i].strip()
 #        width[i] = reduce(max, [len(line[i]) for line in lines])
-    if j == 'i' :
-        for line in lines[1:]: line[i] = ('%%%dd' % width[i]) % int(line[i])
-    if j == 'f' :
-        for line in lines[1:]: line[i] = Decimal(line[i]).as_tuple()
-        digits = reduce(digitReducer, [ line[i] for line in lines[1:] ], (0,0))               
-        digits[0] = max(digits[0], len(lines[0][i]) - digits[1] - 1)
-        width[i] = digits[0] + digits[1] + 1
-        for line in lines[1:]: line[i] = tuptoString(line[i], digits[0], digits[1])
+#    if j == 'i' :
+#        for line in lines[1:]: line[i] = ('%%%dd' % width[i]) % int(line[i])
+#    if j == 'f' :
+#        for line in lines[1:]: line[i] = Decimal(line[i]).as_tuple()
+#        digits = reduce(digitReducer, [ line[i] for line in lines[1:] ], (0,0))               
+#        digits[0] = max(digits[0], len(lines[0][i]) - digits[1] - 1)
+#        width[i] = digits[0] + digits[1] + 1
+#        for line in lines[1:]: line[i] = tuptoString(line[i], digits[0], digits[1])
     if j == 'x' :
         enable[i] = not enable[i]
 
 def draw(stdscr) :
     # header
     start = 5 if lnum else 0
+    ender = 3 if header else 0
     i,j = (0,start)
-    maxy, maxx = stdscr.getmaxyx()
-    maxy = min(maxy, len(lines) - first_row)
+    maxy2, maxx = stdscr.getmaxyx()
+    maxy = min(maxy2, len(lines) - first_row + ender)
     n = len(col)
 
     stdscr.clear()
@@ -139,7 +157,7 @@ def draw(stdscr) :
     # lines
 
     curr = first_row
-    while i < maxy and curr < len(lines) :
+    while i < maxy2 and curr < len(lines) :
         j = 0
         if lnum : 
             stdscr.addstr(i, j, '%5d' % curr)
@@ -155,7 +173,7 @@ def draw(stdscr) :
         curr += 1
 
     #footer
-    if header and curr < len(lines) :
+    if header and i < maxy2 :
         stdscr.hline(i, start, curses.ACS_HLINE, j-start)
         j = start
         stdscr.addch(i, j, curses.ACS_LLCORNER)
