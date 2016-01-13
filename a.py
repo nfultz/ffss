@@ -9,6 +9,7 @@ lines = []
 col = []
 width = [] 
 enable = []
+last = []
 
 lnum = True
 header = True
@@ -63,19 +64,20 @@ def main(stdscr, f):
         handler(stdscr)
 
 
-#def set_widths() :
-#    map(lambda col: reduce(max, [len(s) for s in col]), zip(*lines))
-#    k = len(col)
-#    width[:] = [0] * k
-#    for line in lines:
-#        width[:] = [ max(width[i], len(line[i])) for i in range(k) ]
-#        width[:] = [ max(w, len(f)) for w, f in zip(width, line) ]
     
 def scroll(delta) :
     global first_row
     n = len(lines)-1
     first_row = max(-n, min(n, first_row + delta))
 
+def pan(delta, d=1) :
+    global first_col
+    while delta > 0:
+        if first_col + d not in xrange(len(col)) : return
+        first_col += d
+        if enable[first_col]: delta -= 1
+
+#    first_col = max(0, min(len(col)-1, first_col + delta))
 
 
 def handler(stdscr) :
@@ -83,28 +85,40 @@ def handler(stdscr) :
     global first_col
     global lnum
     global header
+
+    i = 0
     j = stdscr.getkey()
+
+    if j == '.' : i,j = last
     if j == 'q' : sys.exit()
     if j == '`' : lnum = not lnum
     if j == '~' : header = not header
-    if j == 'k' : scroll(-1)
-    if j == 'j' : scroll(1)
     if j == 'X' : enable[:] = [True] * len(col)
     if j == 'KEY_UP' : scroll(-15)
     if j == 'KEY_DOWN' : scroll(15)
-    if j == 'KEY_LEFT' : first_col = max(first_col - 1, 0)
-    if j == 'KEY_RIGHT' : first_col = min(first_col + 1, len(col))
+    if j == 'KEY_LEFT' : pan(5, -1)
+    if j == 'KEY_RIGHT' : pan(5, 1)
 
-    i = 0
     while j in [str(x) for x in range(10)] : 
         i = i * 10 + int(str(j))
         stdscr.addstr(0, 0, str(i))
         j = stdscr.getkey()
 
-    if j == 'g':
-        first_row = i if i != 0 else 1
+    last[:] = (i,j)
 
-    i = i - 1
+    if j == 'x' :
+        i = i - 1 if i > 0 else first_col
+        enable[i] = not enable[i]
+        while not enable[first_col] : pan(1)
+
+    if i == 0 : i = 1
+
+    if j == 'g': first_row = i
+    if j == 'h' : pan(i,-1)
+    if j == 'l' : pan(i,1)
+    if j == 'k' : scroll(-i)
+    if j == 'j' : scroll(i)
+
 
 #    if j == 's' :
 #        for line in lines[1:]: line[i] = line[i].strip()
@@ -117,8 +131,7 @@ def handler(stdscr) :
 #        digits[0] = max(digits[0], len(lines[0][i]) - digits[1] - 1)
 #        width[i] = digits[0] + digits[1] + 1
 #        for line in lines[1:]: line[i] = tuptoString(line[i], digits[0], digits[1])
-    if j == 'x' :
-        enable[i] = not enable[i]
+
 
 def draw(stdscr) :
     # header
