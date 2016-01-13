@@ -86,8 +86,10 @@ def handler(stdscr) :
     if j == 'q' : sys.exit()
     if j == '`' : lnum = not lnum
     if j == '~' : header = not header
-    if j == 'KEY_UP' : first_row -= 3
-    if j == 'KEY_DOWN' : first_row += 3
+    if j == 'k' : first_row -= 1
+    if j == 'j' : first_row += 1
+    if j == 'KEY_UP' : first_row -= 15
+    if j == 'KEY_DOWN' : first_row += 15
     if j == 'KEY_LEFT' : first_col = max(first_col - 1, 0)
     if j == 'KEY_RIGHT' : first_col = min(first_col + 1, len(col))
 
