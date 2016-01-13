@@ -2,7 +2,7 @@ import curses
 import sys
 import csv
 
-from decimal import Decimal as d
+from decimal import Decimal
 
 lines = []
 
@@ -29,7 +29,8 @@ def tuptoString(x, left=5, right=2) :
                 " " * (dright) , 
     )
 
-
+def digitReducer(x,y):
+    return [max(x[0], len(y.digits)+y.exponent+y.sign), max(x[1], -y.exponent)]
 
 def main(stdscr, f):
 
@@ -67,31 +68,36 @@ def handler(stdscr) :
     j = stdscr.getkey()
     if j == 'q' : sys.exit()
     if j == '`' : lnum = not lnum
-    if j == 'h' : header = not header
+    if j == '~' : header = not header
     if j == 'KEY_UP' : first_row -= 3
     if j == 'KEY_DOWN' : first_row += 3
     if j == 'KEY_LEFT' : first_col = max(first_col - 1, 0)
     if j == 'KEY_RIGHT' : first_col = min(first_col + 1, len(col))
+
+    i = 0
+    while j in [str(x) for x in range(10)] : 
+        i = i * 10 + int(str(j))
+        stdscr.addstr(0, 0, str(i))
+        j = stdscr.getkey()
+
+    if j == 'g':
+        first_row = i
+
+    i = i - 1
+
     if j == 's' :
-        i = int(stdscr.getkey())
-        i = i - 1 if i > 0 else 9
         for line in lines[1:]: line[i] = line[i].strip()
+#        width[i] = reduce(max, [len(line[i]) for line in lines])
     if j == 'i' :
-        i = int(stdscr.getkey())
-        i = i - 1 if i > 0 else 9
         for line in lines[1:]: line[i] = ('%%%dd' % width[i]) % int(line[i])
-    if j == 'n' :
-        i = int(stdscr.getkey())
-        i = i - 1 if i > 0 else 9
-        for line in lines[1:]: line[i] = d(line[i]).as_tuple()
-        dl = [ line[i] for line in lines[1:] ]
-        digits = reduce(lambda x,y: [max(x[0], len(y.digits)+y.exponent+y.sign), max(x[1], -y.exponent)], dl, (0,0))               
+    if j == 'f' :
+        for line in lines[1:]: line[i] = Decimal(line[i]).as_tuple()
+        digits = reduce(digitReducer, [ line[i] for line in lines[1:] ], (0,0))               
         digits[0] = max(digits[0], len(lines[0][i]) - digits[1] - 1)
         width[i] = digits[0] + digits[1] + 1
         for line in lines[1:]: line[i] = tuptoString(line[i], digits[0], digits[1])
-    if j in [str(i) for i in range(10)] : 
-        j = int(j) - 1 if j > 0 else 9
-        enable[j] = not enable[j]
+    if j == 'x' :
+        enable[i] = not enable[i]
 
 def draw(stdscr) :
     # header
