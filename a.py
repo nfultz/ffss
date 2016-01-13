@@ -53,10 +53,6 @@ def main(stdscr, f):
             width[i] = digits[0] + digits[1] + 1
             for line in lines[1:]: line[i] = tuptoString(line[i], digits[0], digits[1])
 
-
-
-
-
     curses.use_default_colors()
 
     # Clear screen
@@ -121,17 +117,17 @@ def handler(stdscr) :
 def draw(stdscr) :
     # header
     start = 5 if lnum else 0
-    ender = 3 if header else 0
+    endln = 3 if header else 0
     i,j = (0,start)
-    maxy2, maxx = stdscr.getmaxyx()
-    maxy = min(maxy2, len(lines) - first_row + ender)
+    maxy, maxx = stdscr.getmaxyx()
+    endln = min(maxy, len(lines) - first_row + endln)
     n = len(col)
 
     stdscr.clear()
 
     if lnum or header :
         j = start
-        stdscr.vline(i, j, curses.ACS_VLINE, maxy)
+        stdscr.vline(i, j, curses.ACS_VLINE, endln)
         j+=1;
 
     if header :
@@ -140,7 +136,7 @@ def draw(stdscr) :
             if j + width[k] > maxx: break
             stdscr.addstr(i, j, col[k] if first_row % 2 else str(k+1))
             j += width[k]
-            stdscr.vline(i, j, curses.ACS_VLINE, maxy)
+            stdscr.vline(i, j, curses.ACS_VLINE, endln)
             j += 1
         i +=  1
 
@@ -159,7 +155,7 @@ def draw(stdscr) :
     # lines
 
     curr = first_row
-    while i < maxy2 and curr < len(lines) :
+    while i < maxy and curr < len(lines) :
         j = 0
         if lnum : 
             stdscr.addstr(i, j, '%5d' % curr)
@@ -175,7 +171,7 @@ def draw(stdscr) :
         curr += 1
 
     #footer
-    if header and i < maxy2 :
+    if header and i < maxy :
         stdscr.hline(i, start, curses.ACS_HLINE, j-start)
         j = start
         stdscr.addch(i, j, curses.ACS_LLCORNER)
@@ -185,8 +181,6 @@ def draw(stdscr) :
             j += width[k] + 1
             stdscr.addch(i, j, curses.ACS_BTEE)
         stdscr.addch(i, j, curses.ACS_LRCORNER)
-
-
 
     stdscr.refresh()
     return True
