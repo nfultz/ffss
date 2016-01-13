@@ -109,9 +109,10 @@ def draw(stdscr) :
 
     stdscr.clear()
 
-    j = start
-    stdscr.vline(i, j, curses.ACS_VLINE, maxy)
-    j+=1;
+    if lnum or header :
+        j = start
+        stdscr.vline(i, j, curses.ACS_VLINE, maxy)
+        j+=1;
 
     if header :
         for k in range(first_col, n):
@@ -152,6 +153,19 @@ def draw(stdscr) :
             j += width[k]
         i += 1
         curr += 1
+
+    #footer
+    if header and curr < len(lines) :
+        stdscr.hline(i, start, curses.ACS_HLINE, j-start)
+        j = start
+        stdscr.addch(i, j, curses.ACS_LLCORNER)
+        for k in range(first_col, n):
+            if not enable[k]: continue
+            if j + width[k] > maxx: break
+            j += width[k] + 1
+            stdscr.addch(i, j, curses.ACS_BTEE)
+        stdscr.addch(i, j, curses.ACS_LRCORNER)
+
 
 
     stdscr.refresh()
