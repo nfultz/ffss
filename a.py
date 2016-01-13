@@ -70,6 +70,10 @@ def set_widths() :
 #        width[:] = [ max(width[i], len(line[i])) for i in range(k) ]
         width[:] = [ max(w, len(f)) for w, f in zip(width, line) ]
     
+def scroll(delta) :
+    global first_row
+    n = len(lines)-1
+    first_row = max(-n, min(n, first_row + delta))
 
 
 
@@ -82,10 +86,10 @@ def handler(stdscr) :
     if j == 'q' : sys.exit()
     if j == '`' : lnum = not lnum
     if j == '~' : header = not header
-    if j == 'k' : first_row -= 1
-    if j == 'j' : first_row += 1
-    if j == 'KEY_UP' : first_row -= 15
-    if j == 'KEY_DOWN' : first_row += 15
+    if j == 'k' : scroll(-1)
+    if j == 'j' : scroll(1)
+    if j == 'KEY_UP' : scroll(-15)
+    if j == 'KEY_DOWN' : scroll(15)
     if j == 'KEY_LEFT' : first_col = max(first_col - 1, 0)
     if j == 'KEY_RIGHT' : first_col = min(first_col + 1, len(col))
 
@@ -96,7 +100,7 @@ def handler(stdscr) :
         j = stdscr.getkey()
 
     if j == 'g':
-        first_row = i
+        first_row = i if i != 0 else 1
 
     i = i - 1
 
