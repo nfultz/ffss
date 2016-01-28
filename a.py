@@ -46,7 +46,7 @@ def main(stdscr, f):
     frxp = re.compile('^-?[0-9]*[.]?[0-9]*$')
     for i in range(len(col)):
         if all(irxp.match(x[i]) for x in lines[1:]):
-            for line in lines[1:]: line[i] = ('%%%dd' % width[i]) % int(line[i])
+            for line in lines[1:]: line[i] = '%%%dd' % width[i] % int(line[i])
         if all(frxp.match(x[i]) for x in lines[1:]):
             for line in lines[1:]: line[i] = Decimal(line[i]).as_tuple()
             digits = reduce(digitReducer, [ line[i] for line in lines[1:] ], (0,0))               
@@ -109,28 +109,16 @@ def handler(stdscr) :
     if j == 'x' :
         i = i - 1 if i > 0 else first_col
         enable[i] = not enable[i]
-        while not enable[first_col] : pan(1)
+        while not enable[first_col] or first_col == len(col) : pan(1)
 
     if i == 0 : i = 1
 
-    if j == 'g': first_row = i
+    if j == 'g' : first_row = i
     if j == 'h' : pan(i,-1)
     if j == 'l' : pan(i,1)
     if j == 'k' : scroll(-i)
     if j == 'j' : scroll(i)
 
-
-#    if j == 's' :
-#        for line in lines[1:]: line[i] = line[i].strip()
-#        width[i] = reduce(max, [len(line[i]) for line in lines])
-#    if j == 'i' :
-#        for line in lines[1:]: line[i] = ('%%%dd' % width[i]) % int(line[i])
-#    if j == 'f' :
-#        for line in lines[1:]: line[i] = Decimal(line[i]).as_tuple()
-#        digits = reduce(digitReducer, [ line[i] for line in lines[1:] ], (0,0))               
-#        digits[0] = max(digits[0], len(lines[0][i]) - digits[1] - 1)
-#        width[i] = digits[0] + digits[1] + 1
-#        for line in lines[1:]: line[i] = tuptoString(line[i], digits[0], digits[1])
 
 
 def draw(stdscr) :
