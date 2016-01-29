@@ -2,6 +2,7 @@ import curses
 import sys
 import csv
 import re
+import os
 from decimal import Decimal
 
 lines = []
@@ -33,10 +34,12 @@ def tuptoString(x, left=5, right=2) :
 def digitReducer(x,y):
     return [max(x[0], len(y.digits)+y.exponent+y.sign), max(x[1], -y.exponent)]
 
-def main(stdscr, f):
+def main(stdscr):
 
-    with open(f, 'rb') as f:
-        lines[:] = list(csv.reader(f))
+    lines[:] = list(csv.reader(sys.stdin))
+
+    tty = open('/dev/tty', 'r')
+    os.dup2(tty.fileno(), sys.stdin.fileno())
 
     col[:] = lines[0]
     enable[:] = [True] * len(col)
@@ -49,7 +52,7 @@ def main(stdscr, f):
             for line in lines[1:]: line[i] = '%%%dd' % width[i] % int(line[i])
         if all(frxp.match(x[i]) for x in lines[1:]):
             for line in lines[1:]: line[i] = Decimal(line[i]).as_tuple()
-            digits = reduce(digitReducer, [ line[i] for line in lines[1:] ], (0,0))               
+            digits = reduce(digitReducer, [ line[i] for line in lines[1:] ], [0,0])
             digits[0] = max(digits[0], len(lines[0][i]) - digits[1] - 1)
             width[i] = digits[0] + digits[1] + 1
             for line in lines[1:]: line[i] = tuptoString(line[i], digits[0], digits[1])
@@ -196,4 +199,4 @@ def draw(stdscr) :
 
 
 if __name__ == '__main__' :
-    curses.wrapper(main, sys.argv[1])
+    curses.wrapper(main)
