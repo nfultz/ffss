@@ -198,8 +198,3 @@ def draw(stdscr) :
     stdscr.refresh()
     return True
 
-
-
-
-if __name__ == '__main__' :
-    curses.wrapper(main)
