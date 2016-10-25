@@ -36,10 +36,13 @@ def digitReducer(x,y):
 
 def main(stdscr):
 
-    lines[:] = list(csv.reader(sys.stdin))
-
-    tty = open('/dev/tty', 'r')
-    os.dup2(tty.fileno(), sys.stdin.fileno())
+    if len(sys.argv) > 1 :
+        with open(sys.argv[1]) as f:
+            lines[:] = list(csv.reader(f))
+    else :
+        lines[:] = list(csv.reader(sys.stdin))
+        tty = open('/dev/tty', 'r')
+        os.dup2(tty.fileno(), sys.stdin.fileno())
 
     col[:] = lines[0]
     enable[:] = [True] * len(col)
