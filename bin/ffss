@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [ -n $STY ]; then
+  TMPFILE=`mktemp`
+  cat >$TMPFILE
+  screen -t ffss python -m ffss $TMPFILE
+  sleep .5
+  screen -X select ffss
+  rm $TMPFILE
+  exit
+fi
+
+python -m ffss
