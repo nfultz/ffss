@@ -9,7 +9,6 @@ setup(name='ffss',
       author_email='nfultz@gmail.com',
       license='BSD',
       packages=['ffss'],
-      install_requires=['ncurses'],
       zip_safe=False,
       include_package_data=True,
       scripts=['bin/ffss']

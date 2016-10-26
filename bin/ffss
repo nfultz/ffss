@@ -1,13 +1,17 @@
 #!/bin/bash
-
 if [ -n $STY ]; then
-  TMPFILE=`mktemp`
-  cat >$TMPFILE
-  screen -t ffss python -m ffss $TMPFILE
+  if [ -z $* ]; then
+    TMPFILE=`mktemp`
+    cat >$TMPFILE
+    trap "rm $TMPFILE" EXIT
+  else
+    TMPFILE=$*
+  fi
+  WINDOW=`date +"ffss%M%S"`
+  screen -t $WINDOW python -m ffss $TMPFILE
   sleep .5
-  screen -X select ffss
-  rm $TMPFILE
+  screen -X select $WINDOW
   exit
 fi
 
-python -m ffss
+python -m ffss $*
