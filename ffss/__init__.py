@@ -8,11 +8,8 @@ from decimal import Decimal
 lines = []
 
 col = []
-orig_width = []
-width = []
-enable = []
+
 last = []
-format = []
 
 lnum = True
 header = True
@@ -20,8 +17,21 @@ header = True
 first_row = 1
 first_col = 0
 
-def getWidth(k):
-    return width[k] if format[k][1] else orig_width[k]
+class column(object) :
+    def __init__(self, name, unformatted_width, formatted_width, format):
+        self.name =  name
+        self.unformatted_width =  unformatted_width
+        self.formatted_width =  formatted_width
+        self.format =  format
+        self.enable =  True
+        self.use_formatter=True
+
+    def getWidth(self) :
+        return self.formatted_width if self.use_formatter else self.unformatted_width
+
+    def __mod__(self, val):
+        return self.format(val) if self.use_formatter else val
+
 
 def tuptoString(s, left=5, right=2) :
     x = Decimal(s).as_tuple()
@@ -55,10 +65,9 @@ def main(stdscr):
         os.dup2(tty.fileno(), sys.stdin.fileno())
 
     col[:] = lines[0]
-    enable[:] = [True] * len(col)
-    orig_width[:] = map(lambda col: reduce(max, [len(s) for s in col]), zip(*lines))
-    format[:] = [(lambda x:x) if w < 20 else (lambda x: x[:20]) for w in orig_width]
-    width[:] = map(min, orig_width, [20]*len(col))
+    orig_width = map(lambda col: reduce(max, [len(s) for s in col]), zip(*lines))
+    format = [(lambda x:x) if w < 20 else (lambda x: x[:20]) for w in orig_width]
+    width = map(min, orig_width, [20]*len(col))
 
     irxp = re.compile('^-?[0-9]+$')
     frxp = re.compile('^-?[0-9]*[.]?[0-9]*$')
@@ -73,7 +82,7 @@ def main(stdscr):
             format[i] = (lambda d0, d1: lambda x: tuptoString(x, d0, d1))(digits[0], digits[1])
 #            for line in lines[1:]: line[i] = tuptoString(line[i], digits[0], digits[1])
 
-    format[:] = [(f,True) for f in format]
+    col[:] = [column(n,u,w,f) for n,u,w,f in zip(col, orig_width, width, format)]
 
     curses.use_default_colors()
 
@@ -96,7 +105,7 @@ def pan(delta, d=1) :
     while delta > 0:
         if first_col + d not in xrange(len(col)) : return
         first_col += d
-        if enable[first_col]: delta -= 1
+        if col[first_col].enable: delta -= 1
 
 #    first_col = max(0, min(len(col)-1, first_col + delta))
 
@@ -114,14 +123,16 @@ def handler(stdscr) :
     if j == 'Z' : sys.exit()
     if j == '`' : lnum = not lnum
     if j == '~' : header = not header
-    if j == 'X' : enable[:] = [True] * len(col)
+    if j == 'X' :
+        for c in col:
+            c.enable = True
     if j == 'KEY_UP' : scroll(-15)
     if j == 'KEY_DOWN' : scroll(15)
     if j == 'KEY_LEFT' : pan(5, -1)
     if j == 'KEY_RIGHT' : pan(5, 1)
     if j == ' ' : scroll(stdscr.getmaxyx()[0] - 2* header)
 
-    while j in [str(x) for x in range(10)] :
+    while j in '0123456789' :
         i = i * 10 + int(str(j))
         stdscr.addstr(0, 0, str(i))
         j = stdscr.getkey()
@@ -130,8 +141,13 @@ def handler(stdscr) :
 
     if j == 'x' :
         i = i - 1 if i > 0 else first_col
-        enable[i] = not enable[i]
-        while not enable[first_col] or first_col == len(col) : pan(1)
+        col[i].enable = not col[i].enable
+        while not col[first_col].enable or first_col == len(col) : pan(1)
+
+    if j == 'u' :
+        i = i - 1 if i > 0 else first_col
+        col[i].use_formatter = not col[i].use_formatter
+
 
     if i == 0 : i = 1
 
@@ -162,10 +178,10 @@ def draw(stdscr) :
 
     if header :
         for k in range(first_col, n):
-            if not enable[k]: continue
-            if j + getWidth(k) > maxx: break
-            stdscr.addstr(i, j, col[k] if first_row % 2 else str(k+1))
-            j += getWidth(k)
+            if not col[k].enable: continue
+            if j + col[k].getWidth() > maxx: break
+            stdscr.addstr(i, j, col[k].name if first_row % 2 else str(k+1))
+            j += col[k].getWidth()
             stdscr.vline(i, j, curses.ACS_VLINE, endln)
             j += 1
         i +=  1
@@ -175,9 +191,9 @@ def draw(stdscr) :
         j = start
         stdscr.addch(i, j, curses.ACS_LTEE)
         for k in range(first_col, n):
-            if not enable[k]: continue
-            if j + getWidth(k) > maxx: break
-            j += getWidth(k) + 1
+            if not col[k].enable: continue
+            if j + col[k].getWidth() > maxx: break
+            j += col[k].getWidth() + 1
             stdscr.addch(i, j, curses.ACS_PLUS)
         stdscr.addch(i, j, curses.ACS_RTEE)
         i += 1
@@ -191,16 +207,16 @@ def draw(stdscr) :
             stdscr.addstr(i, j, '%5d' % curr)
             j += 5
         for k in range(first_col,n):
-            if not enable[k]: continue
-            if j + getWidth(k) > maxx: break
+            if not col[k].enable: continue
+            if j + col[k].getWidth() > maxx: break
             j = j + 1
             t = lines[curr][k]
-            if curr != 0 and format[k][1] :
-                t = format[k][0](lines[curr][k])
+            if curr != 0 :
+                t = col[k] % t
 #            stdscr.addstr(i, j, format[k] % lines[curr][k])
             stdscr.addstr(i, j, t)
 #            stdscr.addstr(i, j, lines[curr][k])
-            j += getWidth(k)
+            j += col[k].getWidth()
         i += 1
         curr += 1
 
@@ -210,9 +226,9 @@ def draw(stdscr) :
         j = start
         stdscr.addch(i, j, curses.ACS_LLCORNER)
         for k in range(first_col, n):
-            if not enable[k]: continue
-            if j + getWidth(k) > maxx: break
-            j += getWidth(k) + 1
+            if not col[k].enable: continue
+            if j + col[k].getWidth() > maxx: break
+            j += col[k].getWidth() + 1
             stdscr.addch(i, j, curses.ACS_BTEE)
         stdscr.addch(i, j, curses.ACS_LRCORNER)
 
