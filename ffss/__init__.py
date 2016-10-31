@@ -10,6 +10,7 @@ lines = []
 col = []
 
 last = []
+last_search = []
 
 lnum = True
 header = True
@@ -65,7 +66,7 @@ def main(stdscr):
         os.dup2(tty.fileno(), sys.stdin.fileno())
 
     col[:] = lines[0]
-    orig_width = map(lambda col: reduce(max, [len(s) for s in col]), zip(*lines))
+    orig_width = map(lambda col: max(len(s) for s in col), zip(*lines))
     format = [(lambda x:x) if w < 20 else (lambda x: x[:20]) for w in orig_width]
     width = map(min, orig_width, [20]*len(col))
 
@@ -120,9 +121,10 @@ def handler(stdscr) :
     j = stdscr.getkey()
 
     if j == '.' : i,j = last
-    if j == 'Z' : sys.exit()
+    if j == 'q' : sys.exit()
     if j == '`' : lnum = not lnum
     if j == '~' : header = not header
+    if j == 'd' : detail(stdscr)
     if j == 'X' :
         for c in col:
             c.enable = True
@@ -131,6 +133,9 @@ def handler(stdscr) :
     if j == 'KEY_LEFT' : pan(5, -1)
     if j == 'KEY_RIGHT' : pan(5, 1)
     if j == ' ' : scroll(stdscr.getmaxyx()[0] - 2* header)
+
+    if j == 'n':
+        i,j,txt = last_search[0], 'n', last_search[1]
 
     while j in '0123456789' :
         i = i * 10 + int(str(j))
@@ -148,6 +153,31 @@ def handler(stdscr) :
         i = i - 1 if i > 0 else first_col
         col[i].use_formatter = not col[i].use_formatter
 
+    if j == '/' :
+        win = curses.newwin(1,stdscr.getmaxyx()[1],0,0)
+        win.addstr(0,0, "/")
+        curses.echo()
+        win.refresh();
+        txt = win.getstr(0,1)
+        curses.noecho()
+        del win
+#        stdscr.addstr(0,0,"/"+txt)
+
+
+    if (j == '/' or j == 'n') and txt is not None:
+        p = [i - 1] if i > 0 else range(len(col))
+        pat = re.compile(txt)
+#        fr = first_row
+        done = False
+        while not done:
+            if first_row == len(lines) - 1:
+                done = True
+            if not done :
+                first_row = first_row + 1
+                for c in p :
+                    if pat.search(lines[first_row][c]) :
+                        done = True
+        last_search[:] = (i,txt)
 
     if i == 0 : i = 1
 
@@ -235,3 +265,22 @@ def draw(stdscr) :
     stdscr.refresh()
     return True
 
+def detail(stdscr):
+    maxy, maxx = stdscr.getmaxyx()
+    maxy = maxy - 2
+    maxx = maxx - 2
+
+    win = curses.newwin(maxy,maxx,2,2)
+
+    win.clear()
+    win.box()
+    i = 0
+    r = 1
+    c = max(len(x.name) for x in col) + 4
+    while i < len(col) and r < maxy:
+        win.addstr(r,1, col[i].name)
+        win.addstr(r,c, lines[first_row][i])
+        r = r + 2
+        i = i + 1
+    win.refresh();
+    j = stdscr.getkey()
