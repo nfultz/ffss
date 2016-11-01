@@ -20,7 +20,7 @@ first_col = 0
 
 class column(object) :
     def __init__(self, name, unformatted_width, formatted_width, format):
-        self.name =  name
+        self.name =  name.strip()
         self.unformatted_width =  unformatted_width
         self.formatted_width =  formatted_width
         self.format =  format
@@ -271,16 +271,19 @@ def detail(stdscr):
     maxx = maxx - 2
 
     win = curses.newwin(maxy,maxx,2,2)
-
     win.clear()
     win.box()
+
     i = 0
     r = 1
     c = max(len(x.name) for x in col) + 4
-    while i < len(col) and r < maxy:
+    w = maxx - c - 1
+    while i < len(col) and r < maxy - 2:
         win.addstr(r,1, col[i].name)
-        win.addstr(r,c, lines[first_row][i])
-        r = r + 2
+        for k in range(0, len(lines[first_row][i]), w) :
+            win.addstr(r,c, lines[first_row][i][k:k+w])
+            r = r + 1
+        r = r + 1
         i = i + 1
     win.refresh();
     j = stdscr.getkey()
