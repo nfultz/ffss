@@ -1,6 +1,6 @@
 #ffss - Pager for Flat Files and Tables
 
-ffss is a pager in the tradition of `more` or `less`, specifically for flat files and tables. 
+`ffss` is a pager in the tradition of `more` or `less`, specifically for flat files and tables. 
 
 It sports `vim` inspired keybindings for navigation, and is `screen`-aware.
 
@@ -9,17 +9,19 @@ It sports `vim` inspired keybindings for navigation, and is `screen`-aware.
 
     . : Repeat last command
     q : sys.exit()
-     : toggle line numbers
+    ` : toggle line numbers
     ~ : toggle header
+    d : show detail viewer
     X : unhide all columns
     KEY_UP : scroll up
     KEY_DOWN : scroll down
     KEY_LEFT : pan left
     KEY_RIGHT : pan right
 
-Number prefix work with the following commands:
+Number prefixes work with the following commands:
 
     x : toggle a column
+    / : search within a column
 
     g : go to row
     h : pan left
@@ -31,6 +33,6 @@ Number prefix work with the following commands:
 ##TODO
 
 1. `tmux` awareness
-2. 
+2. replace backend with `pandas`
 
 
